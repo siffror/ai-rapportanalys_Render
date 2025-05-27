@@ -36,3 +36,5 @@ fpdf==1.7.2
 yfinance==0.2.33
 tesseract-ocr
 poppler-utils
+tesseract-ocr
+tesseract-ocr-swe
