@@ -11,7 +11,7 @@ from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
 import pdfplumber
-from core.ocr_utils import extract_text_easyocr, extract_text_pytesseract, TESSERACT_INSTALLED
+from core.ocr_utils import extract_text_easyocr, extract_text_pytesseract
 
 load_dotenv()
 
