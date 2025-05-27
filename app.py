@@ -77,6 +77,10 @@ def is_key_figure(row):
         r"(resultat|omsättning|utdelning|kassaflöde|kapital|intäkter|EBITDA|vinst).*?\d"
     ]
     return any(re.search(p, row, re.IGNORECASE) for p in patterns)
+try:
+    from core.ocr_utils import TESSERACT_INSTALLED
+except ImportError:
+    TESSERACT_INSTALLED = False
 
 # --- UI ---
 st.set_page_config(page_title="📊 AI Rapportanalys", layout="wide")
