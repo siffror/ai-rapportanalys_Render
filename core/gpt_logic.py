@@ -4,18 +4,16 @@ from functools import lru_cache
 from typing import List, Tuple, Dict, Any
 
 from openai import OpenAI, OpenAIError
-from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 
 # Load environment variables
-load_dotenv()
-from openai import OpenAI
+import streamlit as st
 
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    http_client=None  # Undvik att något extern config skickas med
+    api_key=st.secrets["OPENAI_API_KEY"]
 )
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,13 +37,23 @@ def get_embedding(text: str, model: str = "text-embedding-3-small") -> List[floa
 def search_relevant_chunks(
     question: str,
     embedded_chunks: List[Dict[str, Any]],
-    top_k: int = 3
+    top_k: int = 7
 ) -> Tuple[str, List[Tuple[float, str]]]:
     query_embed = get_embedding(question)
+    question_words = set(question.lower().split())
     similarities = []
+
     for item in embedded_chunks:
+        text = item.get("text", "")
+        text_lower = text.lower()
         score = cosine_similarity([query_embed], [item["embedding"]])[0][0]
-        similarities.append((score, item.get("text", "")))
+
+        # Fuzzy bonus: ge lite poäng för ord som matchar frågan
+        fuzzy_bonus = sum(1 for word in question_words if word in text_lower) * 0.005
+        score += fuzzy_bonus
+
+        similarities.append((score, text))
+
     top_chunks = sorted(similarities, key=lambda x: x[0], reverse=True)[:top_k]
     context = "\n---\n".join([chunk for _, chunk in top_chunks])
     logger.info(f"Valde top {top_k} chunks för frågan.")
