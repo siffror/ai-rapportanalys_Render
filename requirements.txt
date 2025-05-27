@@ -37,4 +37,3 @@ yfinance==0.2.33
 tesseract-ocr
 poppler-utils
 tesseract-ocr
-tesseract-ocr-swe
