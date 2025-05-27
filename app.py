@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
+from ocr_utils import extract_text_from_image_or_pdf
 import pdfplumber
-from core.ocr_utils import extract_text_easyocr, extract_text_pytesseract, TESSERACT_INSTALLED
 
 load_dotenv()
 
@@ -77,10 +77,6 @@ def is_key_figure(row):
         r"(resultat|omsättning|utdelning|kassaflöde|kapital|intäkter|EBITDA|vinst).*?\d"
     ]
     return any(re.search(p, row, re.IGNORECASE) for p in patterns)
-try:
-    from core.ocr_utils import TESSERACT_INSTALLED
-except ImportError:
-    TESSERACT_INSTALLED = False
 
 # --- UI ---
 st.set_page_config(page_title="📊 AI Rapportanalys", layout="wide")
@@ -90,51 +86,23 @@ st.image("https://www.appypie.com/dharam_design/wp-content/uploads/2025/05/headd
 html_link = st.text_input("🌐 Rapport-länk (HTML)")
 uploaded_file = st.file_uploader("📎 Ladda upp HTML, PDF, Excel eller bild", type=["html", "pdf", "xlsx", "xls", "png", "jpg", "jpeg"])
 
-
-
 # --- Extrahera text ---
-# --- OCR-motorval ---
-
-ocr_engine = st.radio("🧠 Välj OCR-motor:", ["EasyOCR", "Tesseract"], horizontal=True)
-
-# 🧠 Kontrollera OCR-stöd efter val
-if ocr_engine == "Tesseract" and not TESSERACT_INSTALLED:
-    st.error("❌ Tesseract är inte installerat i denna miljö. Välj EasyOCR istället.")
-    st.stop()
-
-if TESSERACT_INSTALLED:
-    import shutil
-    st.info(f"Tesseract installerad: {shutil.which('tesseract')}")
-
 preview, ocr_text = "", ""
-
-# --- Filuppladdning ---
 if uploaded_file:
-    if uploaded_file.name.endswith((".png", ".jpg", ".jpeg", ".pdf")):
-        if ocr_engine == "EasyOCR":
-            ocr_text, _ = extract_text_easyocr(uploaded_file)
-        else:
-            ocr_text = extract_text_pytesseract(uploaded_file)
-
-        if ocr_text.strip():
-            st.text_area("📄 OCR-utläst text:", ocr_text[:3000], height=250)
-        else:
-            st.warning("⚠️ OCR kunde inte läsa någon text från filen.")
-    
+    if uploaded_file.name.endswith((".png", ".jpg", ".jpeg")):
+        ocr_text, _ = extract_text_from_image_or_pdf(uploaded_file)
+        st.text_area("📄 OCR-utläst text:", ocr_text[:2000], height=200)
     else:
         preview = extract_text_from_file(uploaded_file)
-
 elif html_link:
     preview = fetch_html_text(html_link)
 else:
     preview = st.text_area("✏️ Klistra in text manuellt här:", "", height=200)
 
-# --- Texten som ska analyseras ---
 text_to_analyze = preview or ocr_text
 
-# --- Förhandsvisning av text ---
-if text_to_analyze:
-    st.text_area("📄 Förhandsvisning:", text_to_analyze[:5000], height=200)
+if preview:
+    st.text_area("📄 Förhandsvisning:", preview[:5000], height=200)
 else:
     st.warning("❌ Ingen text att analysera än.")
 
