@@ -11,7 +11,7 @@ from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
 import pdfplumber
-from core.ocr_utils import extract_text_easyocr, extract_text_pytesseract
+from core.ocr_utils import extract_text_easyocr, extract_text_pytesseract, TESSERACT_INSTALLED
 
 load_dotenv()
 
@@ -85,6 +85,12 @@ st.image("https://www.appypie.com/dharam_design/wp-content/uploads/2025/05/headd
 
 html_link = st.text_input("🌐 Rapport-länk (HTML)")
 uploaded_file = st.file_uploader("📎 Ladda upp HTML, PDF, Excel eller bild", type=["html", "pdf", "xlsx", "xls", "png", "jpg", "jpeg"])
+
+if ocr_engine == "Tesseract" and not TESSERACT_INSTALLED:
+    st.error("❌ Tesseract är inte installerat i denna miljö. Välj EasyOCR istället.")
+if TESSERACT_INSTALLED:
+    import shutil
+    st.info(f"Tesseract installerad: {shutil.which('tesseract')}")
 
 # --- Extrahera text ---
 # --- OCR-motorval ---
