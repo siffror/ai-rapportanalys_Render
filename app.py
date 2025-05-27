@@ -13,6 +13,7 @@ from utils import extract_noterade_bolag_table
 from ocr_utils import extract_text_from_image_or_pdf
 import pdfplumber
 from ocr_utils import extract_text_easyocr, extract_text_pytesseract
+from core.ocr_utils import extract_text_from_image_or_pdf
 
 load_dotenv()
 
