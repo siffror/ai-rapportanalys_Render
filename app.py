@@ -90,15 +90,21 @@ st.image("https://www.appypie.com/dharam_design/wp-content/uploads/2025/05/headd
 html_link = st.text_input("🌐 Rapport-länk (HTML)")
 uploaded_file = st.file_uploader("📎 Ladda upp HTML, PDF, Excel eller bild", type=["html", "pdf", "xlsx", "xls", "png", "jpg", "jpeg"])
 
-if ocr_engine == "Tesseract" and not TESSERACT_INSTALLED:
-    st.error("❌ Tesseract är inte installerat i denna miljö. Välj EasyOCR istället.")
-if TESSERACT_INSTALLED:
-    import shutil
-    st.info(f"Tesseract installerad: {shutil.which('tesseract')}")
+
 
 # --- Extrahera text ---
 # --- OCR-motorval ---
+
 ocr_engine = st.radio("🧠 Välj OCR-motor:", ["EasyOCR", "Tesseract"], horizontal=True)
+
+# 🧠 Kontrollera OCR-stöd efter val
+if ocr_engine == "Tesseract" and not TESSERACT_INSTALLED:
+    st.error("❌ Tesseract är inte installerat i denna miljö. Välj EasyOCR istället.")
+    st.stop()
+
+if TESSERACT_INSTALLED:
+    import shutil
+    st.info(f"Tesseract installerad: {shutil.which('tesseract')}")
 
 preview, ocr_text = "", ""
 
