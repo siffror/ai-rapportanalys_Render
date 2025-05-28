@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
-from core.ocr_utils import extract_text_from_image_or_pdf
 import pdfplumber
 from evaluator_ragas import evaluate_rag_sample
 
@@ -88,24 +87,21 @@ html_link = st.text_input("🌐 Rapport-länk (HTML)")
 uploaded_file = st.file_uploader("📎 Ladda upp HTML, PDF, Excel eller bild", type=["html", "pdf", "xlsx", "xls", "png", "jpg", "jpeg"])
 
 # --- Extrahera text ---
-preview, ocr_text = "", ""
+preview = ""
 if uploaded_file:
-    if uploaded_file.name.endswith((".png", ".jpg", ".jpeg")):
-        ocr_text, _ = extract_text_from_image_or_pdf(uploaded_file)
-        st.text_area("📄 OCR-utläst text:", ocr_text[:2000], height=200)
-    else:
-        preview = extract_text_from_file(uploaded_file)
+    preview = extract_text_from_file(uploaded_file)
 elif html_link:
     preview = fetch_html_text(html_link)
 else:
     preview = st.text_area("✏️ Klistra in text manuellt här:", "", height=200)
 
-text_to_analyze = preview or ocr_text
+text_to_analyze = preview
 
 if preview:
     st.text_area("📄 Förhandsvisning:", preview[:5000], height=200)
 else:
     st.warning("❌ Ingen text att analysera än.")
+
 
 # --- Fullständig analys ---
 if st.button("🔍 Fullständig rapportanalys"):
