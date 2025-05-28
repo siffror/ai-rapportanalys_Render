@@ -140,6 +140,8 @@ if text_to_analyze and len(text_to_analyze.strip()) > 20:
             context, top_chunks = search_relevant_chunks(st.session_state.user_question, embedded_chunks)
             st.code(context[:1000], language="text")
             answer = generate_gpt_answer(st.session_state.user_question, context)
+            st.session_state.answer = answer
+            st.session_state.top_chunks = top_chunks
 
             st.success("✅ Svar klart!")
             st.markdown(f"### 🤖 GPT-4o svar:\n{answer}")
@@ -160,7 +162,7 @@ if text_to_analyze and len(text_to_analyze.strip()) > 20:
 else:
     st.info("📝 Ange text, länk eller ladda upp en fil eller bild för att börja.")
 # === RAGAS-evaluering (säkert och korrekt hanterat) ===
-if "top_chunks" in locals() and "answer" in locals():
+if "top_chunks" in st.session_state and "answer" in st.session_state:
     with st.expander("🧪 Utvärdera GPT-svar med RAGAS"):
         st.markdown("#### 🔍 RAG Evaluering")
         st.markdown("**Kontext (top chunks):**")
@@ -182,6 +184,7 @@ if "top_chunks" in locals() and "answer" in locals():
                 st.error(f"❌ Fel vid utvärdering: {e}")
 else:
     st.info("💡 Kör först GPT-analysen innan du kan utvärdera svaret.")
+
 
 
 
