@@ -11,7 +11,7 @@ from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
 import pdfplumber
-from evaluator_ragas import evaluate_rag_sample
+from evaluator_simple import simple_rag_evaluation
 
 load_dotenv()
 
@@ -160,19 +160,20 @@ if text_to_analyze and len(text_to_analyze.strip()) > 20:
                 pdf.multi_cell(0, 10, line)
             st.download_button("📄 Ladda ner svar (.pdf)", pdf.output(dest="S").encode("latin1"), file_name="gpt_svar.pdf")
 
-            # === Automatisk RAGAS-utvärdering ===
+            # === -utvärdering ===
+
             try:
                 contexts = [chunk[1] for chunk in top_chunks]
-                scores = evaluate_rag_sample(
+                scores = simple_rag_evaluation(
                     question=st.session_state.user_question,
                     answer=st.session_state.answer,
                     contexts=contexts
                 )
-                st.markdown("### 🧪 RAGAS Evaluering (automatisk)")
+                st.markdown("### 🧪 Enkel RAG Evaluering (heuristisk)")
                 st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
                 st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
             except Exception as e:
-                st.error(f"❌ Fel vid automatisk utvärdering: {e}")
+                st.error(f"❌ Fel vid utvärdering: {e}")
 
 
 
