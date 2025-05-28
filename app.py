@@ -159,19 +159,27 @@ if text_to_analyze and len(text_to_analyze.strip()) > 20:
             st.download_button("📄 Ladda ner svar (.pdf)", pdf.output(dest="S").encode("latin1"), file_name="gpt_svar.pdf")
 else:
     st.info("📝 Ange text, länk eller ladda upp en fil eller bild för att börja.")
-with st.expander("🧪 Utvärdera GPT-svar med RAGAS"):
-    st.markdown("#### 🔍 RAG Evaluering")
-    st.markdown("**Kontext (top chunks):**")
-    for i, chunk in enumerate(top_chunks):
-        st.code(chunk["text"][:400], language="text")
 
-    if st.button("Utvärdera RAG-svar"):
-        contexts = [chunk["text"] for chunk in top_chunks]
-        scores = evaluate_rag_sample(
-            question=st.session_state.user_question,
-            answer=answer,
-            contexts=contexts
-        )
-        st.success("✅ Utvärdering klar!")
-        st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
-        st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
+if "top_chunks" in locals() and "answer" in locals():
+    with st.expander("🧪 Utvärdera GPT-svar med RAGAS"):
+        st.markdown("#### 🔍 RAG Evaluering")
+        st.markdown("**Kontext (top chunks):**")
+        for i, chunk in enumerate(top_chunks):
+            st.code(chunk["text"][:400], language="text")
+
+        if st.button("Utvärdera RAG-svar"):
+            contexts = [chunk["text"] for chunk in top_chunks]
+            try:
+                scores = evaluate_rag_sample(
+                    question=st.session_state.user_question,
+                    answer=answer,
+                    contexts=contexts
+                )
+                st.success("✅ Utvärdering klar!")
+                st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
+                st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
+            except Exception as e:
+                st.error(f"❌ Fel vid utvärdering: {e}")
+else:
+    st.info("💡 Kör först GPT-analysen innan du kan utvärdera svaret.")
+
