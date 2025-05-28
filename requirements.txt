@@ -14,7 +14,7 @@ openpyxl==3.1.2
 openai==1.79.0
 langchain==0.1.20
 chromadb==0.4.24
-tiktoken==0.6.0
+tiktoken==0.7.0
 ragas
 
 # === Text- & PDF-analys ===
