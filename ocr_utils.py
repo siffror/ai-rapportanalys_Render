@@ -1,15 +1,20 @@
-# ocr_utils.py
+
 import os
 import tempfile
 from typing import Tuple
 from PIL import Image
 from pdf2image import convert_from_bytes
 import numpy as np
+import shutil
 
 import easyocr
 import pytesseract
 
+# Initiera EasyOCR-läsare
 reader = easyocr.Reader(['sv', 'en'], gpu=False)
+
+# Kontrollera om Tesseract är installerat i systemet
+TESSERACT_INSTALLED = shutil.which("tesseract") is not None
 
 def extract_text_easyocr(file) -> Tuple[str, str]:
     suffix = os.path.splitext(file.name)[1].lower()
@@ -26,7 +31,8 @@ def extract_text_easyocr(file) -> Tuple[str, str]:
         for page_img in pages:
             result = reader.readtext(np.array(page_img), detail=0)
             text += "\n".join(result) + "\n"
-        # För temp_path (exempelvis för att visa bilden)
+
+        # För temp_path (för visning eller logg)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             pages[0].save(temp_file.name, "JPEG")
             temp_path = temp_file.name
@@ -34,6 +40,9 @@ def extract_text_easyocr(file) -> Tuple[str, str]:
     return text, temp_path
 
 def extract_text_pytesseract(file) -> str:
+    if not TESSERACT_INSTALLED:
+        raise RuntimeError("❌ Tesseract OCR är inte installerat i miljön. Installera det eller använd EasyOCR.")
+
     suffix = os.path.splitext(file.name)[1].lower()
     text = ""
 
