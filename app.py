@@ -171,12 +171,12 @@ if "top_chunks" in st.session_state and "answer" in st.session_state:
     
         if st.button("Utvärdera RAG-svar"):
             contexts = [chunk[1] for chunk in st.session_state.top_chunks]
+            try:
                 scores = evaluate_rag_sample(
                     question=st.session_state.user_question,
                     answer=st.session_state.answer,
                     contexts=contexts
                 )
-            
                 st.success("✅ Utvärdering klar!")
                 st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
                 st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
