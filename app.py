@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 from core.gpt_logic import search_relevant_chunks, generate_gpt_answer, get_embedding, chunk_text, full_rapportanalys
 from utils import extract_noterade_bolag_table
-from ocr_utils import extract_text_from_image_or_pdf
+from core.ocr_utils import extract_text_from_image_or_pdf
 import pdfplumber
 from evaluator_ragas import evaluate_rag_sample
 
