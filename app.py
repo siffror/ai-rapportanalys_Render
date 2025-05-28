@@ -160,15 +160,35 @@ if text_to_analyze and len(text_to_analyze.strip()) > 20:
 else:
     st.info("📝 Ange text, länk eller ladda upp en fil eller bild för att börja.")
 
+# Efter att GPT-svaret genererats:
+st.success("✅ Svar klart!")
+st.markdown(f"### 🤖 GPT-4o svar:\n{answer}")
+
+key_figures = [row for row in answer.split("\n") if is_key_figure(row)]
+if key_figures:
+    st.markdown("### 📊 Möjliga nyckeltal i svaret:")
+    for row in key_figures:
+        st.markdown(f"- {row}")
+
+st.download_button("💾 Ladda ner svar (.txt)", answer, file_name="gpt_svar.txt")
+
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
+for line in answer.split("\n"):
+    pdf.multi_cell(0, 10, line)
+st.download_button("📄 Ladda ner svar (.pdf)", pdf.output(dest="S").encode("latin1"), file_name="gpt_svar.pdf")
+
+# ✅ RAGAS-utvärdering – korrekt hantering av top_chunks som tuple
 if "top_chunks" in locals() and "answer" in locals():
     with st.expander("🧪 Utvärdera GPT-svar med RAGAS"):
         st.markdown("#### 🔍 RAG Evaluering")
         st.markdown("**Kontext (top chunks):**")
         for i, chunk in enumerate(top_chunks):
-            st.code(chunk["text"][:400], language="text")
+            st.code(chunk[1][:400], language="text")  # chunk[1] = text
 
         if st.button("Utvärdera RAG-svar"):
-            contexts = [chunk["text"] for chunk in top_chunks]
+            contexts = [chunk[1] for chunk in top_chunks]  # extrahera text
             try:
                 scores = evaluate_rag_sample(
                     question=st.session_state.user_question,
@@ -182,4 +202,5 @@ if "top_chunks" in locals() and "answer" in locals():
                 st.error(f"❌ Fel vid utvärdering: {e}")
 else:
     st.info("💡 Kör först GPT-analysen innan du kan utvärdera svaret.")
+
 
