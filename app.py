@@ -119,71 +119,62 @@ st.text_input("Fråga:", key="user_question")
 
 if text_to_analyze and len(text_to_analyze.strip()) > 20:
     if st.button("🔍 Analysera med GPT"):
-        with st.spinner("🤖 GPT analyserar..."):
-            source_id = (html_link or uploaded_file.name if uploaded_file else text_to_analyze[:50]) + "-v2"
-            cache_file = get_embedding_cache_name(source_id)
-            embedded_chunks = load_embeddings_if_exists(cache_file)
+    with st.spinner("🤖 GPT analyserar..."):
+        source_id = (html_link or uploaded_file.name if uploaded_file else text_to_analyze[:50]) + "-v2"
+        cache_file = get_embedding_cache_name(source_id)
+        embedded_chunks = load_embeddings_if_exists(cache_file)
 
-            if not embedded_chunks:
-                chunks = chunk_text(text_to_analyze)
-                embedded_chunks = []
-                for i, chunk in enumerate(chunks, 1):
-                    st.write(f"🔹 Chunk {i} – {len(chunk)} tecken")
-                    try:
-                        embedding = get_embedding(chunk)
-                        embedded_chunks.append({"text": chunk, "embedding": embedding})
-                    except Exception as e:
-                        st.error(f"❌ Fel vid embedding av chunk {i}: {e}")
-                        st.stop()
-                save_embeddings(cache_file, embedded_chunks)
+        if not embedded_chunks:
+            chunks = chunk_text(text_to_analyze)
+            embedded_chunks = []
+            for i, chunk in enumerate(chunks, 1):
+                st.write(f"🔹 Chunk {i} – {len(chunk)} tecken")
+                try:
+                    embedding = get_embedding(chunk)
+                    embedded_chunks.append({"text": chunk, "embedding": embedding})
+                except Exception as e:
+                    st.error(f"❌ Fel vid embedding av chunk {i}: {e}")
+                    st.stop()
+            save_embeddings(cache_file, embedded_chunks)
 
-            context, top_chunks = search_relevant_chunks(st.session_state.user_question, embedded_chunks)
-            st.code(context[:1000], language="text")
-            answer = generate_gpt_answer(st.session_state.user_question, context)
-            st.session_state.answer = answer
-            st.session_state.top_chunks = top_chunks
+        context, top_chunks = search_relevant_chunks(st.session_state.user_question, embedded_chunks)
+        st.code(context[:1000], language="text")
+        answer = generate_gpt_answer(st.session_state.user_question, context)
+        st.session_state.answer = answer
+        st.session_state.top_chunks = top_chunks
 
-            st.success("✅ Svar klart!")
-            st.markdown(f"### 🤖 GPT-4o svar:\n{answer}")
+        st.success("✅ Svar klart!")
+        st.markdown(f"### 🤖 GPT-4o svar:\n{answer}")
 
-            key_figures = [row for row in answer.split("\n") if is_key_figure(row)]
-            if key_figures:
-                st.markdown("### 📊 Möjliga nyckeltal i svaret:")
-                for row in key_figures:
-                    st.markdown(f"- {row}")
+        key_figures = [row for row in answer.split("\n") if is_key_figure(row)]
+        if key_figures:
+            st.markdown("### 📊 Möjliga nyckeltal i svaret:")
+            for row in key_figures:
+                st.markdown(f"- {row}")
 
-            st.download_button("💾 Ladda ner svar (.txt)", answer, file_name="gpt_svar.txt")
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            for line in answer.split("\n"):
-                pdf.multi_cell(0, 10, line)
-            st.download_button("📄 Ladda ner svar (.pdf)", pdf.output(dest="S").encode("latin1"), file_name="gpt_svar.pdf")
-else:
-    st.info("📝 Ange text, länk eller ladda upp en fil eller bild för att börja.")
-# === RAGAS-evaluering (säkert och korrekt hanterat) ===
-if "top_chunks" in st.session_state and "answer" in st.session_state:
-    with st.expander("🧪 Utvärdera GPT-svar med RAGAS"):
-        st.markdown("#### 🔍 RAG Evaluering")
-        st.markdown("**Kontext (top chunks):**")
-        for i, chunk in enumerate(st.session_state.top_chunks):
-            st.code(chunk[1][:400], language="text")
-    
-        if st.button("Utvärdera RAG-svar"):
-            contexts = [chunk[1] for chunk in st.session_state.top_chunks]
-            try:
-                scores = evaluate_rag_sample(
-                    question=st.session_state.user_question,
-                    answer=st.session_state.answer,
-                    contexts=contexts
-                )
-                st.success("✅ Utvärdering klar!")
-                st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
-                st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
-            except Exception as e:
-                st.error(f"❌ Fel vid utvärdering: {e}")
-else:
-    st.info("💡 Kör först GPT-analysen innan du kan utvärdera svaret.")
+        st.download_button("💾 Ladda ner svar (.txt)", answer, file_name="gpt_svar.txt")
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        for line in answer.split("\n"):
+            pdf.multi_cell(0, 10, line)
+        st.download_button("📄 Ladda ner svar (.pdf)", pdf.output(dest="S").encode("latin1"), file_name="gpt_svar.pdf")
+
+        # === Automatisk RAGAS-utvärdering ===
+        try:
+            contexts = [chunk[1] for chunk in top_chunks]
+            scores = evaluate_rag_sample(
+                question=st.session_state.user_question,
+                answer=st.session_state.answer,
+                contexts=contexts
+            )
+            st.markdown("### 🧪 RAGAS Evaluering (automatisk)")
+            st.metric("Faithfulness", f"{scores['faithfulness']:.2f}")
+            st.metric("Answer Relevancy", f"{scores['answer_relevancy']:.2f}")
+        except Exception as e:
+            st.error(f"❌ Fel vid automatisk utvärdering: {e}")
+
+
 
 
 
